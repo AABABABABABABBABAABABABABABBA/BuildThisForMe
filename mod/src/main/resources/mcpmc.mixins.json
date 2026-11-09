@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "package": "com.mcpmc.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "ChatHudMixin",
+    "PlayerListHudMixin",
+    "HandledScreenMixin",
+    "InGameHudMixin"
+  ],
+  "injectors": { "defaultRequire": 1 }
+}

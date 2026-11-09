@@ -1,0 +1,21 @@
+{
+  "name": "minecraft-mcp",
+  "version": "1.0.0",
+  "description": "MCP server that bridges any AI assistant to a live Minecraft session via a transparent proxy. Exposes player state, world queries, and movement/chat/combat actions. Detects anti-cheat flags and reduces kick risk.",
+  "main": "src/index.js",
+  "type": "module",
+  "bin": {
+    "minecraft-mcp": "src/index.js"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  },
+  "dependencies": {
+    "minecraft-protocol": "^1.49.0",
+    "vec3": "^0.1.10"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "id": "mcpmc",
+  "version": "${version}",
+  "name": "Minecraft MCP",
+  "description": "Model Context Protocol server inside Minecraft. Any AI can connect over HTTP to inspect the world, drive the player, read/edit GUIs, replay transactions, and run higher-level strategies.",
+  "authors": ["you"],
+  "contact": {
+    "homepage": "https://github.com/AABABABABABABBABAABABABABABBA/BuildThisForMe"
+  },
+  "license": "MIT",
+  "icon": "assets/mcpmc/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": ["com.mcpmc.McpMod"]
+  },
+  "mixins": ["mcpmc.mixins.json"],
+  "depends": {
+    "fabricloader": ">=0.16.0",
+    "fabric": "*",
+    "minecraft": "~1.21.1",
+    "java": ">=21"
+  }
+}
