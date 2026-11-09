@@ -1,4 +1,33 @@
 import { suggestMitigations } from './anticheat.js';
+import { DB as VULNDB, findFor as vulnFindFor, isLikelyAffected } from './vulndb.js';
+
+const KNOWN_ACS = ['Grim','Vulcan','Matrix','Verus','NCP','AAC','Spartan','Themis','Horizon','Hawk','Karhu','Witherac','Intave','Polar'];
+
+function scanChatForVersions(chat, names) {
+  const re = /v?(\d+\.\d+(?:\.\d+)?(?:[-+][a-z0-9.]+)?)/i;
+  const out = {};
+  for (const msg of chat) {
+    const text = String(msg.raw ?? msg.text ?? '');
+    const low = text.toLowerCase();
+    for (const n of names) {
+      const i = low.indexOf(n.toLowerCase());
+      if (i < 0) continue;
+      const win = text.slice(i, i + n.length + 40);
+      const m = win.match(re);
+      if (m && !out[n]) out[n] = m[1];
+    }
+  }
+  return out;
+}
+
+function probeCommands(ac) {
+  const base = ['/plugins', '/pl'];
+  const map = { grim:'/grim version', vulcan:'/vulcan version', matrix:'/matrix version',
+                ncp:'/ncp version', aac:'/aac version', spartan:'/spartan version',
+                themis:'/themis version', polar:'/polar version' };
+  if (ac && map[ac.toLowerCase()]) base.push(map[ac.toLowerCase()]);
+  return base;
+}
 
 export function defineTools({ state, ac, proxy, log }) {
   return [
@@ -206,6 +235,51 @@ export function defineTools({ state, ac, proxy, log }) {
         proxy.send(name, data);
         return { sent: name };
       },
+    },
+
+    {
+      name: 'anticheat_vulnerabilities',
+      description: 'Return publicly documented bypass findings against the detected anti-cheat (or `name` if provided), filtered against `version` when known. Research data, not exploit code.',
+      inputSchema: {
+        type: 'object',
+        properties: { name: { type: 'string' }, version: { type: 'string' } },
+      },
+      handler: ({ name, version }) => {
+        const target = name ?? ac.name ?? null;
+        const hits = vulnFindFor(target).filter(e => isLikelyAffected(e, version));
+        return {
+          anti_cheat: target,
+          assumed_version: version ?? null,
+          finding_count: hits.length,
+          findings: hits,
+        };
+      },
+    },
+
+    {
+      name: 'anticheat_check',
+      description: 'Full report: fingerprint + version extracted from chat + likely applicable vulnerabilities + recommended probe commands (/plugins, /grim version, etc.).',
+      inputSchema: { type: 'object', properties: {} },
+      handler: () => {
+        const names = ac.name ? [ac.name] : KNOWN_ACS;
+        const versions = scanChatForVersions(state.chat, names);
+        const version = ac.name ? versions[ac.name] : null;
+        const vulns = vulnFindFor(ac.name).filter(e => isLikelyAffected(e, version));
+        return {
+          fingerprint: { detected: ac.name, confidence: ac.confidence, rubber_bands: ac.rubberBands },
+          version_from_chat: versions,
+          likely_vulnerabilities: vulns,
+          probe_commands: probeCommands(ac.name),
+          note: 'Curated public research against the named plugin\'s release notes and public bypass reports. For authorized testing only.',
+        };
+      },
+    },
+
+    {
+      name: 'anticheat_database',
+      description: 'Return the full curated vulnerability database for offline review.',
+      inputSchema: { type: 'object', properties: {} },
+      handler: () => ({ count: VULNDB.length, findings: VULNDB }),
     },
 
     {
